@@ -5,18 +5,14 @@ class Conv():
 
     def __init__(self,X_shape,num_filter,h_filter,w_filter,stride,padding):
 
-        # shape of input volume
         self.num_image,self.c_image,self.h_image,self.w_image = X_shape
 
-        # parameters that define output volume
         self.num_filter,self.h_filter,self.w_filter = num_filter,h_filter,w_filter
         self.stride,self.padding = stride,padding
 
-        # create and initialize weights and bias for the layer
         self.W = np.random.randn(num_filter,self.c_image,h_filter,w_filter) / np.sqrt(num_filter/2.)
         self.b = np.zeros((self.num_filter,1))
 
-        # calculate the shape of output volume
         self.h_output = ((self.h_image - h_filter + 2*padding)/ stride) + 1
         self.w_output = ((self.w_image - w_filter + 2*padding)/ stride) + 1
 
@@ -142,55 +138,57 @@ class FullyConnected():
 class BatchNorm():
 
     def __init__(self,X_shape):
-
-        n_X,c_X,h_X,w_X = X_shape
+        self.X_shape = X_shape
+        n_X,c_X,h_X,w_X = self.X_shape
         self.gamma = np.ones((1,c_X*h_X*w_X)) 
         self.beta = np.zeros((1,c_X*h_X*w_X)) 
 
     def forward(self,X):
-        # step 1
-        mu = np.mean(X,axis=0)
-        # step 2
-        self.x_mu = X - mu
-        # step 3
-        sq = self.x_mu**2
-        # step 4
-        self.var = np.var(X, axis=0)
-        # step 5
-        self.sqrtvar = np.sqrt(self.var + 1e-8)
-        # step 6
-        self.ivar = 1./self.sqrtvar
-        # step 7
-        self.x_norm = self.x_mu * self.ivar
-        # step 8
-        gamma_x = self.gamma * self.x_norm
-        # step 9
-        out = gamma_x + self.beta
-        return out
+        n_X,c_X,h_X,w_X = self.X_shape
+        self.X_flat = X.reshape(n_X,c_X*h_X*w_X)
+        
+        self.mu = np.mean(self.X_flat,axis=0)
+        self.var = np.var(self.X_flat, axis=0)
+        self.X_norm = (self.X_flat - self.mu)/np.sqrt(self.var + 1e-8)
+        out = self.gamma * self.X_norm + self.beta
+        
+        return out.reshape(X.shape)
 
     def backward(self,dout):
-        # step 9
-        dbeta = np.sum(dout,axis=0)
-        dgamma_xnorm = dout
-        # step 8
-        dgamma = np.sum(dgamma_xnorm * self.x_norm)
-        dx_norm = dgamma_xnorm * self.gamma
-        # step 7
-        divar = np.sum(dx_norm * self.x_mu, axis=0)
-        dxmu1 = dx_norm * self.ivar
-        # step 6
-        dsqrtvar = divar * (-1./self.sqrtvar**2)
-        # step 5
-        dvar = dsqrtvar*0.5*(1./np.sqrt(self.var + 1e-8))
-        # step 4
-        dsq = dvar * 1./dout.shape[0] * np.ones(dout.shape)
-        # step 3
-        dxmu2 = 2*dsq*self.x_mu
-        # step 2
-        dmu = -1 * np.sum(dxmu1+dxmu2,axis=0)
-        dx1 = dxmu1+dxmu2
-        # step 1
-        dx2 = dmu * 1./dout.shape[0] * np.ones(dout.shape) * dmu
-        dX = dx1 + dx2
+        n_X,c_X,h_X,w_X = self.X_shape
+        dout = dout.reshape(n_X,c_X*h_X*w_X)
 
+        X_mu = self.X_flat - self.mu
+        var_inv = 1./np.sqrt(self.var + 1e-8)
+        
+        dbeta = np.sum(dout,axis=0)
+        dgamma = dout * self.X_norm
+
+        dX_norm = dout * self.gamma
+        dvar = np.sum(dX_norm * X_mu,axis=0) * -0.5 * (self.var + 1e-8)**(-3/2)
+        dmu = np.sum(dX_norm * -var_inv ,axis=0) + dvar * 1/n_X * np.sum(-2.* X_mu, axis=0)
+        dX = (dX_norm * var_inv) + (dmu / n_X) + (dvar * 2/n_X * X_mu)
+        
+        dX = dX.reshape(n_X,c_X,h_X,w_X)
         return dX, dgamma, dbeta
+
+class Dropout():
+
+    def __init__(self,X_shape,prob=0.5):
+        self.X_shape = X_shape
+        n_X,c_X,h_X,w_X = X_shape
+        self.mask_shape = (n_X,c_X*h_X*w_X)
+        self.prob = prob
+
+    def forward(self,X):
+        X_flat = X.reshape(self.mask_shape)
+        self.mask = np.random.binomial(1,self.prob,size=self.mask_shape) / self.prob
+        out = X_flat * self.mask
+        return out.reshape(self.X_shape)
+    
+    def backward(self,dout):
+        dout = dout.reshape(self.mask_shape)
+        dX = dout * self.mask
+        dX = dX.reshape(self.X_shape)
+        return dX
+

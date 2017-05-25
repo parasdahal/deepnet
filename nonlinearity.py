@@ -1,6 +1,6 @@
 import numpy as np
 
-class relu():
+class ReLU():
     
     def forward(self,X):
         self.X = X
@@ -14,7 +14,7 @@ class relu():
         dX[filter] = 0
         return dX
 
-class sigmoid():
+class Sigmoid():
 
     def forward(self,X):
         self.X = X
