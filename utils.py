@@ -31,8 +31,7 @@ def one_hot_encode(y,num_class):
     return onehot
 
 def accuracy(y_true,y_pred):
-    # note that both y_true and y_pred are not one hot encoded
-    return np.mean(y_pred == y_true)
+    return np.mean(y_pred == y_true) # both are not one hot encoded
 
 def softmax(x):
     max_x = np.max(x, axis=1).reshape((-1, 1))
