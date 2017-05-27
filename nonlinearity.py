@@ -1,6 +1,8 @@
 import numpy as np
 
 class ReLU():
+    def __init__(self):
+        self.params = ()
     
     def forward(self,X):
         self.X = X
@@ -8,11 +10,8 @@ class ReLU():
     
     def backward(self,dout):
         dX = dout.copy()
-        # create a boolean map of all the elements less than 0 in the input from forward prop
-        filter = self.X <= 0
-        # replace elements less than 0 in actual input with 0 in dout
-        dX[filter] = 0
-        return dX
+        dX[self.X <= 0] = 0
+        return dX,()
 
 class Sigmoid():
 
@@ -22,4 +21,4 @@ class Sigmoid():
 
     def backward(self,dout):
         dX = dout * self.X * (1-self.X)
-        return dX
+        return dX,()
