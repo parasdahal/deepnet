@@ -104,45 +104,47 @@ class FullyConnected():
 
     def __init__(self,X_dim,out_size):
 
-        self.d_X,self.h_X,self.w_X = X_dim
-        self.W = np.random.rand(int(self.d_X*self.h_X*self.w_X),out_size)/np.sqrt(int(self.d_X*self.h_X*self.w_X)/2.)
+        self.X_dim = X_dim
+        self.W = np.random.rand(int(np.prod(X_dim)),out_size)/np.sqrt(int(np.prod(X_dim))/2.)
         self.b = np.zeros((1,out_size))
         self.params = [self.W,self.b]
+        self.out_dim = out_size
 
     def forward(self,X):
-        self.n_X = X.shape[0]
-        self.X = X.ravel().reshape(self.n_X,-1)
+        self.X_shape = X.shape
+        self.X = X.ravel().reshape(self.X_shape[0],-1)
         out = np.dot(self.X,self.W) + self.b
         return out
     
     def backward(self,dout):
-        
         dW = np.dot(self.X.T,dout)
         db = np.sum(dout,axis=0)
-        dX = np.dot(dout,self.W.T).reshape(self.n_X,self.d_X,self.h_X,self.w_X)
+        dX = np.dot(dout,self.W.T).reshape(self.X_shape)
         return dX,(dW,db)
 
 class Batchnorm():
 
-    def __init__(self,input_shape):
-        self.input_shape = input_shape
-        self.gamma = np.ones((1,input_shape))
-        self.beta = np.zeros((1,input_shape))
+    def __init__(self,X_dim):
+        self.d_X, self.h_X, self.w_X = X_dim
+        self.gamma = np.ones((1, int(np.prod(X_dim)) ))
+        self.beta = np.zeros((1, int(np.prod(X_dim))))
         self.params = [self.gamma,self.beta]
 
     def forward(self,X):
-        self.X_flat = X.reshape(-1,self.input_shape)
+        self.n_X = X.shape[0]
+        self.X_shape = X.shape
         
+        self.X_flat = X.ravel().reshape(self.n_X,-1)
         self.mu = np.mean(self.X_flat,axis=0)
         self.var = np.var(self.X_flat, axis=0)
         self.X_norm = (self.X_flat - self.mu)/np.sqrt(self.var + 1e-8)
         out = self.gamma * self.X_norm + self.beta
         
-        return out.reshape(X.shape)
+        return out.reshape(self.X_shape)
 
     def backward(self,dout):
-        dout = dout.reshape(-1,self.input_shape)
 
+        dout = dout.ravel().reshape(dout.shape[0],-1)
         X_mu = self.X_flat - self.mu
         var_inv = 1./np.sqrt(self.var + 1e-8)
         
@@ -151,10 +153,10 @@ class Batchnorm():
 
         dX_norm = dout * self.gamma
         dvar = np.sum(dX_norm * X_mu,axis=0) * -0.5 * (self.var + 1e-8)**(-3/2)
-        dmu = np.sum(dX_norm * -var_inv ,axis=0) + dvar * 1/n_X * np.sum(-2.* X_mu, axis=0)
-        dX = (dX_norm * var_inv) + (dmu / n_X) + (dvar * 2/n_X * X_mu)
+        dmu = np.sum(dX_norm * -var_inv ,axis=0) + dvar * 1/self.n_X * np.sum(-2.* X_mu, axis=0)
+        dX = (dX_norm * var_inv) + (dmu / self.n_X) + (dvar * 2/self.n_X * X_mu)
         
-        dX = dX.reshape(n_X,d_X,h_X,w_X)
+        dX = dX.reshape(self.X_shape)
         return dX, (dgamma, dbeta)
 
 class Dropout():
