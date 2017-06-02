@@ -2,7 +2,7 @@ import numpy as np
 
 class ReLU():
     def __init__(self):
-        self.params = ()
+        self.params = []
     
     def forward(self,X):
         self.X = X
@@ -11,7 +11,7 @@ class ReLU():
     def backward(self,dout):
         dX = dout.copy()
         dX[self.X <= 0] = 0
-        return dX,()
+        return dX,[]
 
 class Sigmoid():
 

@@ -14,44 +14,44 @@ class Conv():
         self.b = np.zeros((self.n_filter,1))
         self.params = [self.W,self.b]
 
-        self.h_output = ((self.h_X - h_filter + 2*padding)/ stride) + 1
-        self.w_output = ((self.w_X - w_filter + 2*padding)/ stride) + 1
+        self.h_out = (self.h_X - h_filter + 2*padding)/ stride + 1
+        self.w_out = (self.w_X - w_filter + 2*padding)/ stride + 1
         
 
-        if not self.h_output.is_integer() or not self.w_output.is_integer():
+        if not self.h_out.is_integer() or not self.w_out.is_integer():
             raise Exception("Invalid dimensions!")
 
-        self.h_output,self.w_output  = int(self.h_output), int(self.w_output)
-        self.out_dim = (self.n_filter,self.h_output,self.w_output)
+        self.h_out,self.w_out  = int(self.h_out), int(self.w_out)
+        self.out_dim = (self.n_filter,self.h_out,self.w_out)
 
     def forward(self,X):
         
         self.n_X = X.shape[0]
 
         self.X_col = im2col_indices(X,self.h_filter,self.w_filter,stride=self.stride,padding=self.padding)        
-        W_row = self.W.reshape(self.n_filter,self.d_X*self.h_filter*self.w_filter)
+        W_row = self.W.reshape(self.n_filter,-1)
 
-        out = np.dot(W_row,self.X_col) + self.b
-
-        out = out.reshape(self.n_filter,self.h_output,self.w_output,X.shape[0]).transpose(3,0,1,2)
+        out = W_row @ self.X_col + self.b
+        out = out.reshape(self.n_filter,self.h_out,self.w_out,self.n_X)
+        out = out.transpose(3,0,1,2)
         return out
 
     def backward(self,dout):
 
         dout_flat = dout.transpose(1,2,3,0).reshape(self.n_filter,-1)
 
-        dW = np.dot(dout_flat,self.X_col.T)
+        dW = dout_flat @ self.X_col.T
         dW = dW.reshape(self.W.shape)
 
         db = np.sum(dout,axis=(0,2,3)).reshape(self.n_filter,-1)
 
         W_flat = self.W.reshape(self.n_filter,-1)
 
-        dX_col = np.dot(W_flat.T,dout_flat)
+        dX_col = W_flat.T @ dout_flat
         shape = (self.n_X,self.d_X,self.h_X,self.w_X)
         dX = col2im_indices(dX_col,shape,self.h_filter,self.w_filter,self.padding,self.stride)
 
-        return dX, (dW, db)
+        return dX, [dW, db]
 
 class Maxpool():
 
@@ -98,29 +98,43 @@ class Maxpool():
         shape = (self.n_X*self.d_X,1,self.h_X,self.w_X)
         dX = col2im_indices(dX_col,shape,self.size,self.size,padding=0,stride=self.stride)
         dX = dX.reshape(self.n_X,self.d_X,self.h_X,self.w_X)
-        return dX,()
+        return dX,[]
 
-class FullyConnected():
+class Flatten():
 
-    def __init__(self,X_dim,out_size):
-
-        self.X_dim = X_dim
-        self.W = np.random.rand(int(np.prod(X_dim)),out_size)/np.sqrt(int(np.prod(X_dim))/2.)
-        self.b = np.zeros((1,out_size))
-        self.params = [self.W,self.b]
-        self.out_dim = out_size
-
+    def __init__(self):
+        self.params = []
+        
     def forward(self,X):
         self.X_shape = X.shape
-        self.X = X.ravel().reshape(self.X_shape[0],-1)
-        out = np.dot(self.X,self.W) + self.b
+        self.out_shape = (self.X_shape[0],-1)
+        out = X.ravel().reshape(self.out_shape)
+        self.out_shape = self.out_shape[1]
         return out
     
     def backward(self,dout):
-        dW = np.dot(self.X.T,dout)
+        out = dout.reshape(self.X_shape)
+        return out,()
+
+
+class FullyConnected():
+
+    def __init__(self,in_size,out_size):
+
+        self.W = np.random.randn(in_size,out_size)/np.sqrt(in_size/2.)
+        self.b = np.zeros((1,out_size))
+        self.params = [self.W,self.b]
+
+    def forward(self,X):
+        self.X = X
+        out = self.X @ self.W + self.b
+        return out
+    
+    def backward(self,dout):
+        dW = self.X.T @ dout
         db = np.sum(dout,axis=0)
-        dX = np.dot(dout,self.W.T).reshape(self.X_shape)
-        return dX,(dW,db)
+        dX = dout @ self.W.T 
+        return dX,[dW,db]
 
 class Batchnorm():
 
@@ -157,7 +171,7 @@ class Batchnorm():
         dX = (dX_norm * var_inv) + (dmu / self.n_X) + (dvar * 2/self.n_X * X_mu)
         
         dX = dX.reshape(self.X_shape)
-        return dX, (dgamma, dbeta)
+        return dX, [dgamma, dbeta]
 
 class Dropout():
 
@@ -172,4 +186,4 @@ class Dropout():
     
     def backward(self,dout):
         dX = dout * self.mask
-        return dX,()
+        return dX,[]
