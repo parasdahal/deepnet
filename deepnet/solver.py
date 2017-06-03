@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.utils import shuffle
-from utils import accuracy
+from deepnet.utils import accuracy
 import copy
-from loss import SoftmaxLoss
+from deepnet.loss import SoftmaxLoss
 
 def get_minibatches(X,y,minibatch_size):
     m = X.shape[0]
@@ -19,6 +19,12 @@ def vanilla_update(params,grads,learning_rate=0.01):
         for i in range(len(grad)):
             param[i] += - learning_rate * grad[i]
 
+def momentum_update(velocity,params,grads,learning_rate=0.01,mu=0.9):
+    for v,param,grad, in zip(velocity,params,reversed(grads)):
+        for i in range(len(grad)):
+            v[i] = mu*v[i] + learning_rate * grad[i]
+            param[i] -= v[i]
+
 def sgd(nnet,X_train,y_train,minibatch_size,epoch,learning_rate,verbose=True,\
         X_test=None,y_test=None):
     minibatches = get_minibatches(X_train,y_train,minibatch_size)
@@ -34,12 +40,6 @@ def sgd(nnet,X_train,y_train,minibatch_size,epoch,learning_rate,verbose=True,\
             test_acc = accuracy(y_test,nnet.predict(X_test))
             print("Loss = {0} | Training Accuracy = {1} | Test Accuracy = {2}".format(loss,train_acc,test_acc))
     return nnet
-
-def momentum_update(velocity,params,grads,learning_rate=0.01,mu=0.9):
-    for v,param,grad, in zip(velocity,params,reversed(grads)):
-        for i in range(len(grad)):
-            v[i] = mu*v[i] + learning_rate * grad[i]
-            param[i] -= v[i]
 
 def sgd_momentum(nnet,X_train,y_train,minibatch_size,epoch,learning_rate,mu = 0.9,\
                 verbose=True,X_test=None,y_test=None,nesterov=True):
@@ -63,7 +63,7 @@ def sgd_momentum(nnet,X_train,y_train,minibatch_size,epoch,learning_rate,mu = 0.
                     for i in range(len(param)):
                         param[i] += mu*ve[i]
 
-            loss,grads = nnet.train_step(X_mini,y_mini)  
+            loss,grads = nnet.train_step(X_mini,y_mini)
             momentum_update(velocity,nnet.params,grads,learning_rate=learning_rate,mu=mu)
         
         if verbose:

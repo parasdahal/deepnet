@@ -1,26 +1,22 @@
 import numpy as np
-from utils import softmax
-from layers import Conv,FullyConnected
+from deepnet.utils import softmax
+from deepnet.layers import Conv,FullyConnected
 
 
-def l2_regularization(layers,lam=0.1):
+def l2_regularization(layers,lam=0.001):
     reg_loss = 0.0
     for layer in layers:
         if hasattr(layer,'W'):
             reg_loss += 0.5 * lam * np.sum(layer.W * layer.W)
     return reg_loss
 
-def delta_l2_regularization(layers,grads,lam=0.1):
+def delta_l2_regularization(layers,grads,lam=0.001):
     for layer,grad in zip(layers,reversed(grads)):
         if hasattr(layer,'W'):
             grad[0] += lam * layer.W
     return grads
 
 def SoftmaxLoss(X,y):
-    """
-    X : ndarray of size num_training x num_class
-    y : ndarray of size num_training x 1
-    """
     m = y.shape[0]
     p = softmax(X)
     log_likelihood = -np.log(p[range(m),y])

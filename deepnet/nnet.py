@@ -1,10 +1,6 @@
 import numpy as np
-from loss import SoftmaxLoss,l2_regularization,delta_l2_regularization
-from utils import accuracy,softmax
-
-from layers import Conv,Maxpool,FullyConnected,Batchnorm,Dropout
-from nonlinearity import ReLU
-from solver import sgd,vanilla_update
+from deepnet.loss import SoftmaxLoss,l2_regularization,delta_l2_regularization
+from deepnet.utils import accuracy,softmax
 
 class NeuralNet:
 
