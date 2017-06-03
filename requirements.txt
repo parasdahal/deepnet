@@ -1,0 +1,7 @@
+numpy==1.11.3
+scipy==0.16.1
+matplotlib==1.5.0
+ipykernel==4.2.2
+ipython==4.0.1
+ipython-genutils==0.1.0
+ipywidgets==4.1.1

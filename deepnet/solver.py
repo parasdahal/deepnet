@@ -25,6 +25,18 @@ def momentum_update(velocity,params,grads,learning_rate=0.01,mu=0.9):
             v[i] = mu*v[i] + learning_rate * grad[i]
             param[i] -= v[i]
 
+def adagrad_update(cache,params,grads,learning_rate=0.01):
+    for c,param,grad, in zip(cache,params,reversed(grads)):
+        for i in range(len(grad)):
+            cache[i] += grad[i]**2
+            param[i] += - learning_rate * grad[i] / (np.sqrt(cache[i])+1e-8)
+
+def rmsprop_update(cache,params,grads,learning_rate=0.01,decay_rate=0.9):
+    for c,param,grad, in zip(cache,params,reversed(grads)):
+        for i in range(len(grad)):
+            cache[i] = decay_rate * cache[i] + (1-decay_rate) * grad[i]**2
+            param[i] += - learning_rate * grad[i] / (np.sqrt(cache[i])+1e-4)
+
 def sgd(nnet,X_train,y_train,minibatch_size,epoch,learning_rate,verbose=True,\
         X_test=None,y_test=None):
     minibatches = get_minibatches(X_train,y_train,minibatch_size)

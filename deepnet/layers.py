@@ -201,12 +201,24 @@ class ReLU():
         dX[self.X <= 0] = 0
         return dX,[]
 
-class Sigmoid():
+class sigmoid():
 
     def forward(self,X):
-        self.X = X
-        return 1.0/(1.0+np.exp(X))
+        out = 1.0/(1.0+np.exp(X))
+        self.out = out
+        return out
 
     def backward(self,dout):
-        dX = dout * self.X * (1-self.X)
+        dX = dout * self.out * (1-self.out)
         return dX,[]
+
+class tanh():
+
+    def forward(self,X):
+        out = np.tanh(X)
+        self.out = out
+        return out
+
+    def backward(self,dout):
+        dX = dout * (1 - self.out**2)
+        return dX
