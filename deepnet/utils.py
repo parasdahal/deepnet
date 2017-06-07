@@ -18,7 +18,7 @@ def softmax(x):
     exp_x = np.exp(x - np.max(x, axis=1,keepdims=True))
     return exp_x / np.sum(exp_x, axis=1,keepdims=True)
 
-def load_mnist(path,num_training=1000,num_test=100,cnn=True,one_hot=False):
+def load_mnist(path,num_training=50000,num_test=10000,cnn=True,one_hot=False):
     f = gzip.open(path,'rb')
     training_data, validation_data, test_data = cPickle.load(f,encoding='iso-8859-1')
     f.close()

@@ -79,8 +79,21 @@ def sgd_momentum(nnet,X_train,y_train,minibatch_size,epoch,learning_rate,mu = 0.
             momentum_update(velocity,nnet.params,grads,learning_rate=learning_rate,mu=mu)
         
         if verbose:
-            train_acc = accuracy(y_train,nnet.predict(X_train))
-            test_acc = accuracy(y_test,nnet.predict(X_test))
+            m_train = X_train.shape[0]
+            m_test = X_test.shape[0]
+            y_train_pred = np.array([],dtype="int64")
+            y_test_pred = np.array([],dtype="int64")
+            for i in range (0,m_train,minibatch_size):
+                X_tr = X_train[i:i+minibatch_size,:,:,:]
+                y_tr = y_train[i:i+minibatch_size,]
+                y_train_pred = np.append(y_train_pred,nnet.predict(X_tr))
+            for i in range (0,m_test,minibatch_size):
+                X_te = X_test[i:i+minibatch_size,:,:,:]
+                y_te = y_test[i:i+minibatch_size,]
+                y_test_pred = np.append(y_test_pred,nnet.predict(X_te))
+            
+            train_acc = accuracy(y_train,y_train_pred)
+            test_acc = accuracy(y_test,y_test_pred)
             print("Loss = {0} | Training Accuracy = {1} | Test Accuracy = {2}".format(loss,train_acc,test_acc))
     return nnet
 
