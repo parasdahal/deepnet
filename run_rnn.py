@@ -1,6 +1,7 @@
 import numpy as np
-from deepnet.utils import softmax
-from deepnet.loss import SoftmaxLoss
+from deepnet.nnet import RNN
+from deepnet.solver import sgd_rnn
+
 
 def text_to_inputs(path):
     """
@@ -20,10 +21,15 @@ def text_to_inputs(path):
         y = np.array(y)
 
         vocab_size = len(char_to_idx)
-        return dict(X=X, y=y, vocab_size=vocab_size,
-                    char_to_idx=char_to_idx, idx_to_char=idx_to_char)
+        return X, y, vocab_size, char_to_idx, idx_to_char
 
 
 if __name__ == "__main__":
+
+    X, y, vocab_size, char_to_idx, idx_to_char = text_to_inputs('data/sample.txt')
+    rnn = RNN(vocab_size,vocab_size,char_to_idx,idx_to_char)
+    rnn = sgd_rnn(rnn,X,y,10,10,0.1)
+
+
 
     

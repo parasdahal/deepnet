@@ -1,9 +1,9 @@
 import numpy as np
 from deepnet.loss import SoftmaxLoss, l2_regularization, delta_l2_regularization
 from deepnet.utils import accuracy, softmax
+from deepnet.utils import one_hot_encode
 
-
-class NeuralNet:
+class CNN:
 
     def __init__(self, layers, loss_func=SoftmaxLoss):
         self.layers = layers
@@ -43,32 +43,33 @@ class RNN:
         self.vocab_size = vocab_size
         self.h_size = h_size
         self.char_to_idx = char_to_idx
-        self.idx_to_char
+        self.idx_to_char = idx_to_char
         self.model = dict(
-            Wxh=np.random.rand(v_size, h_size) / np.sqrt(v_size / 2),
+            Wxh=np.random.rand(vocab_size, h_size) / np.sqrt(vocab_size / 2),
             Whh=np.random.rand(h_size, h_size) / np.sqrt(h_size / 2),
-            Why=np.random.rand(h_size, v_size) / np.sqrt(h_size / 2),
-            bh=np.zeros((1, v_size)),
+            Why=np.random.rand(h_size, vocab_size) / np.sqrt(h_size / 2),
+            bh=np.zeros((1, vocab_size)),
             by=np.zeros((1, h_size))
         )
+        self.initial_state = np.zeros((1, self.h_size))
 
-    def _forward(X, h):
+    def _forward(self, X, h):
         # input to one hot
-        X_onehot = np.zeros((1, self.vocab_size))
+        X_onehot = np.zeros(self.vocab_size)
         X_onehot[X] = 1
+        X_onehot = X_onehot.reshape(1,-1)
 
         h_prev = h.copy()
         # calculate hidden step with tanh
-        h = np.tanh(X @ self.model['Wxh'] + h_prev @
-                    self.model['Whh'] + self.model['bh'])
+        h = np.tanh(np.dot(X,self.model['Wxh']) + np.dot(h_prev,self.model['Whh']) + self.model['bh'])
 
         # fully connected forward step
-        y = X @ model['Why'] + model['by']
+        y = np.dot(X, self.model['Why']) + self.model['by']
 
         cache = (X_onehot, h_prev)
         return y, h, cache
 
-    def _backward(out, y, dh_next, cache):
+    def _backward(self, out, y, dh_next, cache):
 
         X_onehot, h_prev = cache
 
@@ -100,16 +101,17 @@ class RNN:
 
         # forward pass and store values for bptt
         for x, y in zip(X_train, y_train):
-            y, h, cache = self._forward(x, h)
-            loss, _ = SoftmaxLoss(x, y)
-            total_loss += loss
-            ys.append(y)
+            y_pred, h, cache = self._forward(x, h)
+            p = softmax(y_pred)
+            log_likelihood = -np.log(p[range(y_pred.shape[0]), y])
+            total_loss += np.sum(log_likelihood) / y_pred.shape[0]
+            ys.append(y_pred)
             caches.append(cache)
 
         total_loss /= X_train.shape[0]
 
         # backprop through time
-        dh_next = np.zeros((1, h_size))
+        dh_next = np.zeros((1, self.h_size))
         for t in reversed(range(len(X_train))):
             grad, dh_next = self._backward(
                 ys[t], y_train[t], dh_next, caches[t])
@@ -121,4 +123,8 @@ class RNN:
         for k, v in grads.items():
             grads[k] = np.clip(v, -5.0, 5.0)
 
-        return grads, loss, h
+        return loss, grads, h
+
+    def predict(self, X):
+        X = self.forward(X)
+        return np.argmax(softmax(X), axis=1)

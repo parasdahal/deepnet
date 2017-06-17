@@ -9,7 +9,7 @@ Note: deepnet is a work in progress and things will be added gradually. It is no
 **Network Architecture**
 1. Convolutional net
 2. Feed forward net
-3. LSTM/GRU Net (coming soon)
+3. Recurrent net (LSTM/GRU coming soon)
 
 **Optimization Algorithms**
 1. SGD

@@ -5,10 +5,11 @@ import copy
 from deepnet.loss import SoftmaxLoss
 
 
-def get_minibatches(X, y, minibatch_size):
+def get_minibatches(X, y, minibatch_size,shuffle=True):
     m = X.shape[0]
     minibatches = []
-    X, y = shuffle(X, y)
+    if shuffle:
+        X, y = shuffle(X, y)
     for i in range(0, m, minibatch_size):
         X_batch = X[i:i + minibatch_size, :, :, :]
         y_batch = y[i:i + minibatch_size, ]
@@ -58,6 +59,21 @@ def sgd(nnet, X_train, y_train, minibatch_size, epoch, learning_rate, verbose=Tr
             test_acc = accuracy(y_test, nnet.predict(X_test))
             print("Loss = {0} | Training Accuracy = {1} | Test Accuracy = {2}".format(
                 loss, train_acc, test_acc))
+    return nnet
+
+def sgd_rnn(nnet, X_train, y_train, minibatch_size, epoch, learning_rate, verbose=True):
+    for i in range(epoch):
+        loss = 0
+        if verbose:
+            print("Epoch {0}".format(i + 1))
+        hidden_state = nnet.initial_state
+        loss, grads, hidden_state = nnet.train_step(X_train, y_train, hidden_state)
+
+        for k in grads.keys():
+            nnet.model[k] -= learning_rate * grads[k]
+        
+        if verbose:
+            print("Loss = {0}".format(loss))
     return nnet
 
 

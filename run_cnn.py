@@ -2,7 +2,7 @@ import numpy as np
 from deepnet.utils import load_mnist, load_cifar10
 from deepnet.layers import *
 from deepnet.solver import sgd, sgd_momentum, adam
-from deepnet.nnet import NeuralNet
+from deepnet.nnet import CNN
 import sys
 
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         X, y = training_set
         X_test, y_test = test_set
         mnist_dims = (1, 28, 28)
-        cnn = NeuralNet(make_mnist_cnn(mnist_dims, num_class=10))
+        cnn = CNN(make_mnist_cnn(mnist_dims, num_class=10))
         cnn = sgd_momentum(cnn, X, y, minibatch_size=35, epoch=20,
                            learning_rate=0.01, X_test=X_test, y_test=y_test)
 
@@ -49,6 +49,6 @@ if __name__ == "__main__":
         X, y = training_set
         X_test, y_test = test_set
         cifar10_dims = (3, 32, 32)
-        cnn = NeuralNet(make_cifar10_cnn(cifar10_dims, num_class=10))
+        cnn = CNN(make_cifar10_cnn(cifar10_dims, num_class=10))
         cnn = sgd_momentum(cnn, X, y, minibatch_size=10, epoch=200,
                            learning_rate=0.01, X_test=X_test, y_test=y_test)
