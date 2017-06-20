@@ -26,7 +26,7 @@ def text_to_inputs(path):
 
 if __name__ == "__main__":
 
-    X, y, vocab_size, char_to_idx, idx_to_char = text_to_inputs('data/sample.txt')
+    X, y, vocab_size, char_to_idx, idx_to_char = text_to_inputs('data/Rnn.txt')
     rnn = RNN(vocab_size,vocab_size,char_to_idx,idx_to_char)
     rnn = sgd_rnn(rnn,X,y,10,10,0.1)
 
