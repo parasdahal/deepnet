@@ -172,7 +172,7 @@ class Batchnorm():
         var_inv = 1. / np.sqrt(self.var + 1e-8)
 
         dbeta = np.sum(dout, axis=0)
-        dgamma = dout * self.X_norm
+        dgamma = np.sum(dout * self.X_norm, axis=0)
 
         dX_norm = dout * self.gamma
         dvar = np.sum(dX_norm * X_mu, axis=0) * - \
@@ -208,7 +208,7 @@ class ReLU():
 
     def forward(self, X):
         self.X = X
-        return np.maximum(X, 0)
+        return np.maximum(0, X)
 
     def backward(self, dout):
         dX = dout.copy()
@@ -217,6 +217,8 @@ class ReLU():
 
 
 class sigmoid():
+    def __init__(self):
+        self.params = []
 
     def forward(self, X):
         out = 1.0 / (1.0 + np.exp(X))
@@ -229,6 +231,8 @@ class sigmoid():
 
 
 class tanh():
+    def __init__(self):
+        self.params = []
 
     def forward(self, X):
         out = np.tanh(X)
@@ -237,4 +241,4 @@ class tanh():
 
     def backward(self, dout):
         dX = dout * (1 - self.out**2)
-        return dX
+        return dX, []
