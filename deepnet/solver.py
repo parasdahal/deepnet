@@ -5,10 +5,10 @@ import copy
 from deepnet.loss import SoftmaxLoss
 
 
-def get_minibatches(X, y, minibatch_size,shuffle=True):
+def get_minibatches(X, y, minibatch_size,shuffleTag=True):
     m = X.shape[0]
     minibatches = []
-    if shuffle:
+    if shuffleTag:
         X, y = shuffle(X, y)
     for i in range(0, m, minibatch_size):
         X_batch = X[i:i + minibatch_size, :, :, :]
