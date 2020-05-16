@@ -1,6 +1,6 @@
-import numpy as np
 import _pickle as cPickle
 import gzip
+import numpy as np
 import os
 
 

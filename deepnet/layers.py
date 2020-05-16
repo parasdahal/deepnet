@@ -1,4 +1,5 @@
 import numpy as np
+
 from deepnet.im2col import *
 
 

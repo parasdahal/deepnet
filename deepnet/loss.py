@@ -1,6 +1,6 @@
 import numpy as np
+
 from deepnet.utils import softmax
-from deepnet.layers import Conv, FullyConnected
 
 
 def l2_regularization(layers, lam=0.001):

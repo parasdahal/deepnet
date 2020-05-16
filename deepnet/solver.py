@@ -1,8 +1,7 @@
 import numpy as np
 from sklearn.utils import shuffle
+
 from deepnet.utils import accuracy
-import copy
-from deepnet.loss import SoftmaxLoss
 
 
 def get_minibatches(X, y, minibatch_size,shuffleTag=True):

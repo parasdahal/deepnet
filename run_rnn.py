@@ -1,4 +1,5 @@
 import numpy as np
+
 from deepnet.nnet import RNN
 from deepnet.solver import sgd_rnn
 
